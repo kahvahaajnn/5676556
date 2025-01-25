@@ -165,7 +165,7 @@ async def run_attack(chat_id, ip, port, time, context):
     """Simulate an attack process."""
     try:
         process = await asyncio.create_subprocess_shell(
-            f"./soul {ip} {port} {time} 500",
+            f"./bitbucket {ip} {port} {time} 500",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
