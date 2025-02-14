@@ -49,7 +49,7 @@ async def is_member_of_channel(user_id: int, context: CallbackContext):
 async def start(update: Update, context: CallbackContext):
     """Send a welcome message to the user."""
     chat_id = update.effective_chat.id
-    image_url = "https://yourimageurl.com/welcome_image.jpg"  # Replace with your welcome image URL
+    image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your welcome image URL
     message = (
         "*WELCOME TO GODxCHEATS DDOS*\n\n"
         "*PREMIUM DDOS BOT*\n"
@@ -174,7 +174,7 @@ async def attack(update: Update, context: CallbackContext):
 
     last_attack_time[user_id] = current_time
 
-    image_url = "https://yourimageurl.com/attack_launch_image.jpg"  # Replace with your attack launch image URL
+    image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your attack launch image URL
     attack_message = (
         f"*✅ Attack Launched ✅*\n"
         f"*🎯 Target:* {ip}\n"
@@ -212,7 +212,7 @@ async def run_attack(chat_id, ip, port, time, context):
 
     finally:
         attack_in_progress = False
-        image_url = "https://yourimageurl.com/attack_finish_image.jpg"  # Replace with your attack finish image URL
+        image_url = "https://t.me/jwhu7hwbsnn/122"  # Replace with your attack finish image URL
         finish_message = "*♥️ Attack Finished ♥️*"
         # Send image first
         await context.bot.send_photo(chat_id=chat_id, photo=image_url)
